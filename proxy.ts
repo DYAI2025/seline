@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
 const SESSION_COOKIE_NAME = "zlutty-session";
 
 // Public routes that don't require authentication
-const PUBLIC_ROUTES = ["/login", "/signup", "/api/auth"];
+const PUBLIC_ROUTES = ["/login", "/signup", "/api/auth", "/api/avatar"];
 
 // Static assets and API routes that should always be accessible
 const STATIC_ROUTES = [
