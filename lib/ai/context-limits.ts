@@ -13,6 +13,7 @@ const DEFAULT_PROVIDER_LIMITS: Record<LLMProvider, number> = {
   claudecode: 200000,  // Claude Opus 4.6 = 200K standard
   kimi: 128000,        // Kimi standard
   ollama: 8192,        // Llama 3 default (conservative)
+  minimax: 80000,      // MiniMax M1 80K context
 };
 
 /**

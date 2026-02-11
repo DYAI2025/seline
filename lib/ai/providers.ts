@@ -25,6 +25,7 @@ import {
 import { isCodexAuthenticated } from "@/lib/auth/codex-auth";
 import { CODEX_MODEL_IDS } from "@/lib/auth/codex-models";
 import { KIMI_MODEL_IDS, KIMI_CONFIG } from "@/lib/auth/kimi-models";
+import { MINIMAX_MODEL_IDS, MINIMAX_CONFIG } from "@/lib/auth/minimax-models";
 import {
   isClaudeCodeAuthenticated,
   needsClaudeCodeTokenRefresh,
@@ -37,7 +38,7 @@ import { createCodexProvider } from "@/lib/ai/providers/codex-provider";
 import { createClaudeCodeProvider } from "@/lib/ai/providers/claudecode-provider";
 
 // Provider types
-export type LLMProvider = "anthropic" | "openrouter" | "antigravity" | "codex" | "kimi" | "ollama" | "claudecode";
+export type LLMProvider = "anthropic" | "openrouter" | "antigravity" | "codex" | "kimi" | "ollama" | "claudecode" | "minimax";
 export type EmbeddingProvider = "openrouter" | "local";
 
 // Provider configuration
@@ -82,6 +83,7 @@ export const DEFAULT_MODELS: Record<LLMProvider, string> = {
   claudecode: "claude-sonnet-4-5-20250929", // Via Claude Pro/MAX OAuth
   kimi: "kimi-k2.5", // Moonshot Kimi K2.5 with 256K context
   ollama: "llama3.1:8b",
+  minimax: "MiniMax-M2.1",
 };
 
 // Utility models - fast/cheap models for background tasks (compaction, memory extraction)
@@ -93,6 +95,7 @@ export const UTILITY_MODELS: Record<LLMProvider, string> = {
   claudecode: "claude-haiku-4-5-20251001", // Via Claude Pro/MAX OAuth
   kimi: "kimi-k2-turbo-preview", // Fast Kimi model for utility tasks
   ollama: "llama3.1:8b",
+  minimax: "MiniMax-M2.1-lightning",
 };
 
 // Claude model prefixes - models that should use Anthropic provider
@@ -117,6 +120,11 @@ const CLAUDECODE_MODEL_ID_SET = new Set(
   CLAUDECODE_MODEL_IDS.map((modelId) => modelId.toLowerCase())
 );
 
+// MiniMax model ID set for routing
+const MINIMAX_MODEL_ID_SET = new Set(
+  MINIMAX_MODEL_IDS.map((modelId) => modelId.toLowerCase())
+);
+
 // Lazy-initialized OpenRouter client (created on first use to pick up API key from settings)
 let _openrouterClient: ReturnType<typeof createOpenAICompatible> | null = null;
 let _openrouterClientApiKey: string | undefined = undefined;
@@ -139,6 +147,10 @@ let _kimiClientApiKey: string | undefined = undefined;
 // Lazy-initialized Ollama client (OpenAI-compatible)
 let _ollamaClient: ReturnType<typeof createOpenAICompatible> | null = null;
 let _ollamaClientBaseUrl: string | undefined = undefined;
+
+// Lazy-initialized MiniMax client (OpenAI-compatible)
+let _minimaxClient: ReturnType<typeof createOpenAICompatible> | null = null;
+let _minimaxClientApiKey: string | undefined = undefined;
 
 // Cache for local embedding model instance
 let _localEmbeddingModel: EmbeddingModel | null = null;
@@ -276,6 +288,34 @@ function getOllamaClient() {
   }
 
   return _ollamaClient;
+}
+
+// Helper to get MiniMax API key dynamically
+function getMiniMaxApiKey(): string | undefined {
+  return process.env.MINIMAX_API_KEY;
+}
+
+function getMiniMaxClient() {
+  const apiKey = getMiniMaxApiKey();
+
+  // Recreate client if API key changed
+  if (_minimaxClient && _minimaxClientApiKey !== apiKey) {
+    _minimaxClient = null;
+  }
+
+  if (!_minimaxClient) {
+    _minimaxClientApiKey = apiKey;
+    _minimaxClient = createOpenAICompatible({
+      name: "minimax",
+      baseURL: MINIMAX_CONFIG.BASE_URL,
+      apiKey: apiKey || "",
+      headers: {
+        "HTTP-Referer": getAppUrl(),
+        "X-Title": "Seline Agent",
+      },
+    });
+  }
+  return _minimaxClient;
 }
 
 /**
@@ -470,6 +510,16 @@ function isKimiModel(modelId: string): boolean {
 }
 
 /**
+ * Check if a model ID is a MiniMax model
+ */
+function isMiniMaxModel(modelId: string): boolean {
+  const lowerModel = modelId.toLowerCase();
+  return MINIMAX_MODEL_ID_SET.has(lowerModel) ||
+         lowerModel.startsWith("minimax-") ||
+         lowerModel.startsWith("abab");
+}
+
+/**
  * Get the appropriate temperature for the current provider
  * Kimi K2.5 models require temperature=1 (fixed value)
  */
@@ -496,6 +546,8 @@ export function invalidateProviderCache(): void {
   _kimiClientApiKey = undefined;
   _ollamaClient = null;
   _ollamaClientBaseUrl = undefined;
+  _minimaxClient = null;
+  _minimaxClientApiKey = undefined;
 }
 
 /**
@@ -565,6 +617,15 @@ export function getConfiguredProvider(): LLMProvider {
       return "anthropic";
     }
     return "kimi";
+  }
+
+  if (provider === "minimax") {
+    const apiKey = getMiniMaxApiKey();
+    if (!apiKey) {
+      console.warn("[PROVIDERS] MiniMax selected but MINIMAX_API_KEY is not set, falling back to anthropic");
+      return "anthropic";
+    }
+    return "minimax";
   }
 
   if (provider === "ollama") {
@@ -641,6 +702,14 @@ export function getLanguageModel(modelOverride?: string): LanguageModel {
       return getKimiClient()(model);
     }
 
+    case "minimax": {
+      const apiKey = getMiniMaxApiKey();
+      if (!apiKey) {
+        throw new Error("MINIMAX_API_KEY environment variable is not configured");
+      }
+      return getMiniMaxClient()(model);
+    }
+
     case "ollama": {
       return getOllamaClient()(model);
     }
@@ -677,6 +746,7 @@ function isClaudeModel(modelId: string): boolean {
       case "codex": return isCodexModel(model);
       case "claudecode": return isClaudeCodeOAuthModel(model) || isClaudeModel(model);
       case "kimi": return isKimiModel(model);
+      case "minimax": return isMiniMaxModel(model);
       case "ollama": return true;
       case "anthropic": return isClaudeModel(model);
       case "openrouter": {
@@ -685,7 +755,7 @@ function isClaudeModel(modelId: string): boolean {
           return true;
         }
         // Avoid routing bare provider-specific IDs through OpenRouter.
-        if (isAntigravityModel(trimmed) || isCodexModel(trimmed) || isClaudeCodeOAuthModel(trimmed) || isKimiModel(trimmed) || isClaudeModel(trimmed)) {
+        if (isAntigravityModel(trimmed) || isCodexModel(trimmed) || isClaudeCodeOAuthModel(trimmed) || isKimiModel(trimmed) || isMiniMaxModel(trimmed) || isClaudeModel(trimmed)) {
           return false;
         }
         return true;
@@ -749,6 +819,16 @@ export function getModelByName(modelId: string): LanguageModel {
       return getKimiClient()(modelId);
     }
     // Fall through to OpenRouter if no Kimi key
+  }
+
+  // Check if model should use MiniMax
+  if (isMiniMaxModel(modelId)) {
+    const apiKey = getMiniMaxApiKey();
+    if (apiKey) {
+      console.log(`[PROVIDERS] Using MiniMax for model: ${modelId}`);
+      return getMiniMaxClient()(modelId);
+    }
+    // Fall through to OpenRouter if no MiniMax key
   }
 
   if (isClaudeModel(modelId)) {
@@ -1120,6 +1200,7 @@ export function providerSupportsFeature(feature: "tools" | "streaming" | "images
     claudecode: { tools: true, streaming: true, images: true },
     kimi: { tools: true, streaming: true, images: true },
     ollama: { tools: false, streaming: true, images: false },
+    minimax: { tools: true, streaming: true, images: false },
   };
 
   return featureSupport[provider]?.[feature] ?? false;

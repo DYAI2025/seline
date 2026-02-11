@@ -89,6 +89,7 @@ export const PROVIDER_DEFAULT_LIMITS: Record<LLMProvider, number> = {
   codex: 400000, // GPT-5 models are 400K context
   kimi: 128000, // Kimi K2 models range 128K-256K
   ollama: 32000, // Local models typically have smaller context
+  minimax: 80000, // MiniMax M1 80K context
 };
 
 // ---------------------------------------------------------------------------

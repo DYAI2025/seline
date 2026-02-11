@@ -13,7 +13,8 @@ export type LLMProvider =
   | "codex"
   | "kimi"
   | "ollama"
-  | "claudecode";
+  | "claudecode"
+  | "minimax";
 
 /** The 4 model roles that map to settings-manager.ts fields */
 export type ModelRole = "chat" | "research" | "vision" | "utility";

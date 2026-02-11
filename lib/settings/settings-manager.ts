@@ -5,10 +5,11 @@ import type { MCPConfig } from "@/lib/mcp/types";
 
 export interface AppSettings {
     // AI Provider settings
-    llmProvider: "anthropic" | "openrouter" | "antigravity" | "codex" | "kimi" | "ollama" | "claudecode";
+    llmProvider: "anthropic" | "openrouter" | "antigravity" | "codex" | "kimi" | "ollama" | "claudecode" | "minimax";
     anthropicApiKey?: string;
     openrouterApiKey?: string;
     kimiApiKey?: string;      // For Moonshot Kimi models
+    minimaxApiKey?: string;   // For MiniMax models (OpenAI-compatible API)
     openaiApiKey?: string;    // For OpenAI Whisper STT, TTS, and other OpenAI-direct services
     ollamaBaseUrl?: string;
     tavilyApiKey?: string;    // For Deep Research web search
@@ -309,6 +310,7 @@ const MODEL_PREFIXES: Record<string, string[]> = {
   // Antigravity uses exact match (see ANTIGRAVITY_EXACT_MODELS), not prefixes
   antigravity: [],
   claudecode: ["claude-opus-4", "claude-sonnet-4", "claude-haiku-4"],
+  minimax: ["minimax-", "abab"],
   ollama: [], // accepts any model name
   openrouter: [], // accepts anything
 };
@@ -454,6 +456,9 @@ function updateEnvFromSettings(settings: AppSettings): void {
     }
     if (settings.kimiApiKey) {
         process.env.KIMI_API_KEY = settings.kimiApiKey;
+    }
+    if (settings.minimaxApiKey) {
+        process.env.MINIMAX_API_KEY = settings.minimaxApiKey;
     }
     if (settings.ollamaBaseUrl !== undefined) {
         process.env.OLLAMA_BASE_URL = settings.ollamaBaseUrl;

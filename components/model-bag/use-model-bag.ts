@@ -63,6 +63,7 @@ export function useModelBag() {
         claudecode: !!data.claudecodeAuth?.isAuthenticated,
         kimi: !!data.kimiApiKey,
         ollama: true,
+        minimax: !!data.minimaxApiKey,
       };
 
       const assignments: Record<string, string> = {

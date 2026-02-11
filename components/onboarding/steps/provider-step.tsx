@@ -6,7 +6,7 @@ import { ArrowLeft, ArrowRight, Check, Sparkles, Key, Globe, Zap, MessageSquare,
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
-export type LLMProvider = "anthropic" | "openrouter" | "antigravity" | "codex" | "kimi" | "claudecode";
+export type LLMProvider = "anthropic" | "openrouter" | "antigravity" | "codex" | "kimi" | "claudecode" | "minimax";
 
 interface ProviderStepProps {
     selectedProvider: LLMProvider;

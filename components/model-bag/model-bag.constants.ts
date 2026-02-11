@@ -66,6 +66,13 @@ export const PROVIDER_THEME: Record<
     iconEmoji: "⚪",
     authType: "local",
   },
+  minimax: {
+    accentColor: "border-rose-500",
+    bgColor: "bg-rose-500/5",
+    badgeColor: "bg-rose-500/20",
+    iconEmoji: "🔴",
+    authType: "api-key",
+  },
 };
 
 /** Display names for providers */
@@ -77,6 +84,7 @@ export const PROVIDER_DISPLAY_NAMES: Record<LLMProvider, string> = {
   claudecode: "Claude Code",
   kimi: "Moonshot Kimi",
   ollama: "Ollama",
+  minimax: "MiniMax",
 };
 
 /** Role display metadata */
