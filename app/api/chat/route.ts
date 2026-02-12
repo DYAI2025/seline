@@ -2493,7 +2493,7 @@ export async function POST(req: Request) {
                 content: text.trim(),
                 sender: "selina",
                 group_id: `selina-chat-${sessionId}`,
-                sender_name: character?.name || "Selina",
+                sender_name: "Selina",
               }).catch(err => console.warn("[EverMemOS] Failed to store assistant response:", err));
             }
           }

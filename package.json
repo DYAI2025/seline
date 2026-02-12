@@ -56,7 +56,7 @@
     "@ai-sdk/openai": "^3.0.2",
     "@ai-sdk/openai-compatible": "^2.0.2",
     "@assistant-ui/react": "^0.11.53",
-    "@assistant-ui/react-ai-sdk": "^1.1.20",
+    "@assistant-ui/react-ai-sdk": "~1.2.0",
     "@assistant-ui/react-markdown": "^0.11.5",
     "@hapi/boom": "^10.0.1",
     "@huggingface/hub": "^2.7.1",
@@ -87,6 +87,7 @@
     "@slack/bolt": "^4.1.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/cron": "^2.0.1",
+    "@types/luxon": "^3.7.1",
     "@vscode/ripgrep": "^1.15.9",
     "@whiskeysockets/baileys": "^6.7.12",
     "ai": "^6.0.7",
@@ -125,6 +126,7 @@
     "qrcode": "^1.5.4",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
+    "react-markdown": "^10.1.0",
     "react-shiki": "^0.9.0",
     "remark-gfm": "^4.0.1",
     "remotion": "^4.0.382",
@@ -162,6 +164,25 @@
     "tsx": "^4.21.0",
     "typescript": "^5.7.2",
     "vitest": "^4.0.17",
-    "wait-on": "^9.0.3"
+    "wait-on": "^9.0.3",
+    "webpack": "^5.105.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "@parcel/watcher",
+      "electron",
+      "zlib-sync",
+      "onnxruntime-node",
+      "ffmpeg-static",
+      "esbuild",
+      "sharp",
+      "protobufjs",
+      "puppeteer",
+      "unrs-resolver",
+      "electron-winstaller",
+      "@swc/core",
+      "@vscode/ripgrep"
+    ]
   }
 }
