@@ -28,6 +28,7 @@ import { getCharacterFull } from "@/lib/characters/queries";
 import { buildInterruptionMessage, buildInterruptionMetadata } from "@/lib/messages/interruption";
 import { requireAuth } from "@/lib/auth/local-auth";
 import { loadSettings } from "@/lib/settings/settings-manager";
+import { MCPClientManager } from "@/lib/mcp/client-manager";
 import { sessionHasTruncatedContent } from "@/lib/ai/truncated-content-store";
 import { taskRegistry } from "@/lib/background-tasks/registry";
 import { registerChatAbortController, removeChatAbortController } from "@/lib/background-tasks/chat-abort-registry";
@@ -1619,6 +1620,20 @@ export async function POST(req: Request) {
       savedUserMessageId = result?.id;
       console.log(`[CHAT API] Saved new user message: ${lastMessage.id} -> ${savedUserMessageId || 'SKIPPED (conflict)'}`);
 
+      // Fire-and-forget: store user message in EverMemOS for memory extraction
+      const evermemosMcp = MCPClientManager.getInstance();
+      if (evermemosMcp.isConnected("evermemos")) {
+        const plainText = getPlainTextFromContent(extractedContent);
+        if (plainText.length > 0) {
+          evermemosMcp.executeTool("evermemos", "memory_store", {
+            content: plainText,
+            sender: "ben",
+            group_id: `selina-chat-${sessionId}`,
+            sender_name: "Ben",
+          }).catch(err => console.warn("[EverMemOS] Failed to store user message:", err));
+        }
+      }
+
       const plainTextContent = getPlainTextFromContent(extractedContent);
       const shouldAutoNameSession = (isNewSession || userMessageCount === 1) && plainTextContent.length > 0;
 
@@ -2468,6 +2483,19 @@ export async function POST(req: Request) {
             triggerExtraction(characterId, sessionId).catch((err) => {
               console.error("[CHAT API] Memory extraction error:", err);
             });
+          }
+
+          // Fire-and-forget: store assistant response in EverMemOS
+          if (text?.trim()) {
+            const evermemosMcp = MCPClientManager.getInstance();
+            if (evermemosMcp.isConnected("evermemos")) {
+              evermemosMcp.executeTool("evermemos", "memory_store", {
+                content: text.trim(),
+                sender: "selina",
+                group_id: `selina-chat-${sessionId}`,
+                sender_name: character?.name || "Selina",
+              }).catch(err => console.warn("[EverMemOS] Failed to store assistant response:", err));
+            }
           }
 
           // Complete the agent run with success
