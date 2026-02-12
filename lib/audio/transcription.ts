@@ -37,6 +37,10 @@ export async function transcribeAudio(
     return transcribeWithWhisperCpp(audio, mimeType, filename);
   }
 
+  if (provider === "gpu") {
+    return transcribeWithGpuService(audio, mimeType, filename);
+  }
+
   throw new Error(`Unsupported STT provider: ${provider}`);
 }
 
@@ -272,6 +276,53 @@ async function transcribeWithWhisperCpp(
 }
 
 // ---------------------------------------------------------------------------
+// GPU Audio Service (faster-whisper on local GPU)
+// ---------------------------------------------------------------------------
+
+async function transcribeWithGpuService(
+  audio: Buffer,
+  mimeType: string,
+  filename?: string
+): Promise<TranscriptionResult> {
+  const settings = loadSettings();
+  const serviceUrl = settings.gpuAudioServiceUrl || "http://127.0.0.1:8100";
+
+  const extension = getExtensionForMimeType(mimeType);
+  const effectiveFilename = filename || `audio.${extension}`;
+
+  const formData = new FormData();
+  const blob = new Blob([new Uint8Array(audio)], { type: mimeType });
+  formData.append("file", blob, effectiveFilename);
+
+  const response = await fetch(`${serviceUrl}/transcribe`, {
+    method: "POST",
+    body: formData,
+    signal: AbortSignal.timeout(30000),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`GPU ASR error ${response.status}: ${errorText}`);
+  }
+
+  const result = await response.json() as {
+    text: string;
+    language?: string;
+    duration_ms?: number;
+  };
+
+  console.log(
+    `[STT] Transcribed via GPU service (${result.duration_ms}ms, lang: ${result.language})`
+  );
+
+  return {
+    text: result.text,
+    provider: "gpu-asr",
+    language: result.language,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Availability checks
 // ---------------------------------------------------------------------------
 
@@ -284,6 +335,10 @@ export function isTranscriptionAvailable(): boolean {
 
   if (settings.sttProvider === "local") {
     return isWhisperCppAvailable();
+  }
+
+  if (settings.sttProvider === "gpu") {
+    return true; // Availability checked at call time via HTTP
   }
 
   // OpenAI provider — need an API key

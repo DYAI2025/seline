@@ -187,7 +187,7 @@ export interface AppSettings {
 
     // TTS (Text-to-Speech) settings
     ttsEnabled?: boolean;
-    ttsProvider?: "elevenlabs" | "openai" | "edge";
+    ttsProvider?: "elevenlabs" | "openai" | "edge" | "gpu";
     ttsAutoMode?: "off" | "always" | "channels-only";
     elevenLabsApiKey?: string;
     elevenLabsVoiceId?: string;
@@ -197,9 +197,12 @@ export interface AppSettings {
 
     // Audio Transcription (STT) settings
     sttEnabled?: boolean;
-    sttProvider?: "openai" | "local";
+    sttProvider?: "openai" | "local" | "gpu";
     sttLocalModel?: string;          // Selected whisper.cpp model ID (default: "ggml-tiny.en")
     whisperCppPath?: string;         // Custom path to whisper-cli binary (auto-detected if empty)
+
+    // Local GPU Audio Service (faster-whisper + F5-TTS)
+    gpuAudioServiceUrl?: string;     // Default: http://127.0.0.1:8100
 
     // Memory settings
     memoryAutoApprove?: boolean;     // Auto-approve background-extracted memories (default: false)

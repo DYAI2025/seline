@@ -7,8 +7,10 @@ import type { TTSOptions, TTSProvider, TTSResult } from "./types";
 import { EdgeTTSProvider } from "./providers/edge-tts";
 import { OpenAITTSProvider } from "./providers/openai-tts";
 import { ElevenLabsTTSProvider } from "./providers/elevenlabs";
+import { GpuTTSProvider } from "./providers/gpu-tts";
 
 const providers: Record<string, TTSProvider> = {
+  gpu: new GpuTTSProvider(),
   edge: new EdgeTTSProvider(),
   openai: new OpenAITTSProvider(),
   elevenlabs: new ElevenLabsTTSProvider(),
@@ -28,8 +30,8 @@ function getProviderChain(): TTSProvider[] {
     chain.push(providers[primary]);
   }
 
-  // Then fallbacks in order: elevenlabs → openai → edge
-  const fallbackOrder = ["elevenlabs", "openai", "edge"];
+  // Then fallbacks in order: gpu → elevenlabs → openai → edge
+  const fallbackOrder = ["gpu", "elevenlabs", "openai", "edge"];
   for (const name of fallbackOrder) {
     if (name !== primary && providers[name]) {
       chain.push(providers[name]);
