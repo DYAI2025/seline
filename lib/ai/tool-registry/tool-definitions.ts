@@ -71,6 +71,7 @@ import {
 } from "../tools/flux2-klein-9b-generate-tool";
 import { createScheduleTaskTool } from "../tools/schedule-task-tool";
 import { createMemorizeTool } from "../tools/memorize-tool";
+import { createMemoryRecallTool } from "@/lib/ai/tools/evermemos-search-tool";
 import { createCalculatorTool } from "../tools/calculator-tool";
 import { createUpdatePlanTool } from "../tools/update-plan-tool";
 import { createSpeakAloudTool } from "../tools/speak-aloud-tool";
@@ -592,6 +593,42 @@ Save memories when the user says "remember that...", "memorize this", "note for 
     ({ sessionId, characterId }) =>
       createMemorizeTool({
         sessionId: sessionId || "UNSCOPED",
+        characterId: characterId || "UNSCOPED",
+      })
+  );
+
+  // EverMemOS Memory Recall - Search shared memory system
+  registry.register(
+    "memory_recall",
+    {
+      displayName: "Memory Recall",
+      category: "knowledge",
+      keywords: [
+        "memory", "recall", "remember", "search memories",
+        "what do you know", "what did we discuss",
+        "foresight", "prediction", "past conversation",
+        "shared memory", "cross-agent",
+      ],
+      shortDescription:
+        "Search the shared memory system for facts, preferences, and past conversations",
+      fullInstructions: `## Memory Recall
+
+Search the EverMemOS shared memory system for relevant memories across all agents (Selina, Claude Code, etc.).
+
+**Use when:**
+- User asks "do you remember..." or "what did we discuss about..."
+- You need context from past interactions
+- Looking for stored preferences or facts
+- Checking foresights/predictions
+
+**Memory types:** episodic_memory (past events), foresight (predictions), event_log (system events)`,
+      loading: { deferLoading: true },
+      requiresSession: true,
+    } satisfies ToolMetadata,
+    ({ sessionId, userId, characterId }) =>
+      createMemoryRecallTool({
+        sessionId: sessionId || "UNSCOPED",
+        userId: userId || "ben",
         characterId: characterId || "UNSCOPED",
       })
   );
