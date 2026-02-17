@@ -86,6 +86,8 @@ function stripMarkdownForTTS(text: string): string {
       .replace(/^[-*_]{3,}\s*$/gm, "")
       // Remove blockquotes
       .replace(/^>\s+/gm, "")
+      // Remove emojis
+      .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, "")
       // Collapse multiple newlines
       .replace(/\n{3,}/g, "\n\n")
       .trim()
@@ -94,10 +96,10 @@ function stripMarkdownForTTS(text: string): string {
 
 /**
  * Truncate text to a TTS-friendly length.
- * F5-TTS quality degrades significantly with long text (>~400 chars).
- * Split by sentences and keep only the first few that fit within the limit.
+ * Edge TTS handles long text via chunking, but very long responses
+ * are better summarized. Keep first ~3000 chars (split at sentence boundary).
  */
-const TTS_MAX_CHARS = 800;
+const TTS_MAX_CHARS = 3000;
 
 function truncateForTTS(text: string): string {
   if (text.length <= TTS_MAX_CHARS) return text;
@@ -226,6 +228,11 @@ export function useVoiceMode({
 
       // Play from server-saved file URL (same approach as speakAloud tool)
       const audio = new Audio(data.audioUrl);
+      // Mute when avatar is active — TalkingHead handles audible playback.
+      // Audio element still plays (muted) so onended fires for lifecycle.
+      if (onAudioElementChangeRef.current) {
+        audio.volume = 0;
+      }
       playbackRef.current = audio;
 
       // Expose audio element for time-sync in avatar panel

@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
-  const { text, voice, speed } = body;
+  const { text, voice, speed, withVisemes } = body;
 
   if (!text || typeof text !== "string") {
     return NextResponse.json({ error: "Missing text" }, { status: 400 });
@@ -43,16 +43,18 @@ export async function POST(req: Request) {
     "generated"
   );
 
-  // Extract visemes for lip-sync (graceful: empty visemes on failure)
+  // Viseme extraction via Rhubarb (~18s) — only when explicitly requested for 3D avatar
   let visemes: Awaited<ReturnType<typeof extractVisemes>> = [];
-  try {
-    visemes = await extractVisemes(
-      Buffer.from(result.audio),
-      result.mimeType,
-      text,
-    );
-  } catch (err) {
-    console.warn("[synthesize] Rhubarb viseme extraction failed, avatar will idle:", err);
+  if (withVisemes) {
+    try {
+      visemes = await extractVisemes(
+        Buffer.from(result.audio),
+        result.mimeType,
+        text,
+      );
+    } catch (err) {
+      console.warn("[synthesize] Rhubarb viseme extraction failed:", err);
+    }
   }
 
   return NextResponse.json({

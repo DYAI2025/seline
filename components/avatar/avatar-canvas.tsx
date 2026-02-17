@@ -16,6 +16,52 @@ const RHUBARB_TO_OCULUS: Record<string, string> = {
   H: "DD",
 };
 
+// Viseme shapes used for amplitude-based lip sync (cycle through for variety)
+const AMPLITUDE_VISEMES = ["aa", "O", "E", "PP", "aa", "kk"];
+
+/**
+ * Generate simple viseme cues from audio amplitude analysis.
+ * Much faster than Rhubarb (~instant) — runs on decoded PCM data.
+ */
+function generateAmplitudeVisemes(audioBuffer: AudioBuffer): {
+  visemes: string[];
+  vtimes: number[];
+  vdurations: number[];
+} {
+  const channelData = audioBuffer.getChannelData(0);
+  const sampleRate = audioBuffer.sampleRate;
+  const windowMs = 60; // analyze in 60ms windows
+  const windowSamples = Math.floor(sampleRate * windowMs / 1000);
+  const threshold = 0.02; // RMS below this = silence
+
+  const visemes: string[] = [];
+  const vtimes: number[] = [];
+  const vdurations: number[] = [];
+  let shapeIdx = 0;
+
+  for (let i = 0; i < channelData.length; i += windowSamples) {
+    const end = Math.min(i + windowSamples, channelData.length);
+    let sum = 0;
+    for (let j = i; j < end; j++) {
+      sum += channelData[j] * channelData[j];
+    }
+    const rms = Math.sqrt(sum / (end - i));
+    const timeMs = Math.round((i / sampleRate) * 1000);
+
+    if (rms > threshold) {
+      // Voice activity — cycle through viseme shapes for natural variety
+      visemes.push(AMPLITUDE_VISEMES[shapeIdx % AMPLITUDE_VISEMES.length]);
+      shapeIdx++;
+    } else {
+      visemes.push("sil");
+    }
+    vtimes.push(timeMs);
+    vdurations.push(windowMs);
+  }
+
+  return { visemes, vtimes, vdurations };
+}
+
 interface AvatarCanvasProps {
   visemes: VisemeCue[];
   audioElement: HTMLAudioElement | null;
@@ -96,24 +142,12 @@ export default function AvatarCanvas({
       return;
     }
 
-    // All three must be present: speaking + audio + visemes
-    if (!audioElement?.src || visemes.length === 0) return;
+    // Need at least audio to proceed
+    if (!audioElement?.src) return;
 
     // Don't re-send for the same audio source
     if (sentAudioRef.current === audioElement.src) return;
     sentAudioRef.current = audioElement.src;
-
-    // Convert Rhubarb visemes to Oculus format for TalkingHead
-    const oculusVisemes: string[] = [];
-    const vtimes: number[] = [];
-    const vdurations: number[] = [];
-
-    for (const cue of visemes) {
-      const oculusId = RHUBARB_TO_OCULUS[cue.shape] ?? "sil";
-      oculusVisemes.push(oculusId);
-      vtimes.push(Math.round(cue.time * 1000));
-      vdurations.push(Math.round(cue.duration * 1000));
-    }
 
     // Fetch audio, decode to AudioBuffer, and send to TalkingHead
     (async () => {
@@ -126,11 +160,30 @@ export default function AvatarCanvas({
         if (audioCtx.state === "suspended") await audioCtx.resume();
         const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
 
-        console.log("[TalkingHead] speakAudio:", visemes.length, "visemes,", audioBuffer.duration.toFixed(1) + "s");
+        let oculusVisemes: string[];
+        let vtimes: number[];
+        let vdurations: number[];
+
+        if (visemes.length > 0) {
+          // Use Rhubarb visemes when available
+          oculusVisemes = visemes.map(
+            (cue) => RHUBARB_TO_OCULUS[cue.shape] ?? "sil"
+          );
+          vtimes = visemes.map((cue) => Math.round(cue.time * 1000));
+          vdurations = visemes.map((cue) => Math.round(cue.duration * 1000));
+          console.log("[TalkingHead] speakAudio:", visemes.length, "Rhubarb visemes,", audioBuffer.duration.toFixed(1) + "s");
+        } else {
+          // Fallback: generate visemes from audio amplitude
+          const generated = generateAmplitudeVisemes(audioBuffer);
+          oculusVisemes = generated.visemes;
+          vtimes = generated.vtimes;
+          vdurations = generated.vdurations;
+          console.log("[TalkingHead] speakAudio:", oculusVisemes.length, "amplitude visemes,", audioBuffer.duration.toFixed(1) + "s");
+        }
+
         head.speakAudio(
           {
             audio: audioBuffer,
-            // TalkingHead requires `words` to be truthy for viseme processing
             words: ["_"],
             wtimes: [0],
             wdurations: [0],

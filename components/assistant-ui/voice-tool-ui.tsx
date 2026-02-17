@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOptionalVoice } from "./voice-context";
+import { useOptionalVoiceModeContext } from "@/components/avatar/voice-mode-context";
 
 // ---------------------------------------------------------------------------
 // Speak Aloud Tool UI
@@ -47,20 +48,23 @@ export const SpeakAloudToolUI: ToolCallContentPartComponent = ({
   result,
 }) => {
   const voiceCtx = useOptionalVoice();
+  const voiceModeCtx = useOptionalVoiceModeContext();
   const hasAutoPlayed = useRef(false);
 
-  // Auto-play when result arrives with audioUrl
+  // Auto-play when result arrives with audioUrl — skip in voice mode
+  // (voice mode has its own auto-TTS, playing both causes double audio)
   useEffect(() => {
     if (
       result?.status === "success" &&
       result.audioUrl &&
       voiceCtx &&
-      !hasAutoPlayed.current
+      !hasAutoPlayed.current &&
+      !voiceModeCtx?.isVoiceMode
     ) {
       hasAutoPlayed.current = true;
       voiceCtx.playAudio(result.audioUrl);
     }
-  }, [result, voiceCtx]);
+  }, [result, voiceCtx, voiceModeCtx?.isVoiceMode]);
 
   // --- Loading state ---
   if (!result) {

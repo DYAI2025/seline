@@ -30,8 +30,8 @@ function getProviderChain(): TTSProvider[] {
     chain.push(providers[primary]);
   }
 
-  // Then fallbacks
-  const fallbackOrder = ["gpu", "elevenlabs", "openai", "edge"];
+  // Then fallbacks (edge = fast, gpu = Qwen3-TTS offline fallback)
+  const fallbackOrder = ["edge", "gpu", "elevenlabs", "openai"];
   for (const name of fallbackOrder) {
     if (name !== primary && providers[name]) {
       chain.push(providers[name]);
