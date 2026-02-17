@@ -30,8 +30,8 @@ function getProviderChain(): TTSProvider[] {
     chain.push(providers[primary]);
   }
 
-  // Then fallbacks (skip gpu - F5-TTS German is broken, produces garbled output)
-  const fallbackOrder = ["elevenlabs", "openai", "edge"];
+  // Then fallbacks
+  const fallbackOrder = ["gpu", "elevenlabs", "openai", "edge"];
   for (const name of fallbackOrder) {
     if (name !== primary && providers[name]) {
       chain.push(providers[name]);

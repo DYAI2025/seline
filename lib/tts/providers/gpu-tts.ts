@@ -2,8 +2,8 @@ import { loadSettings } from "@/lib/settings/settings-manager";
 import type { TTSOptions, TTSProvider, TTSResult } from "../types";
 
 /**
- * GPU TTS provider using the local selina-audio service (F5-TTS).
- * Supports voice cloning via reference audio and German/English synthesis.
+ * GPU TTS provider using the local selina-audio service (Qwen3-TTS).
+ * Uses preset voices with optional style/emotion instructions.
  */
 export class GpuTTSProvider implements TTSProvider {
   name = "gpu";
@@ -19,17 +19,18 @@ export class GpuTTSProvider implements TTSProvider {
 
     const formData = new FormData();
     formData.append("text", options.text);
-    formData.append("language", "en"); // Use base model (German fine-tune is broken, base handles DE fine)
-    formData.append("nfe_step", "32"); // Balance of quality and speed
+    formData.append("speaker", "Serena");
+    formData.append("language", "de");
 
-    if (options.speed) {
-      formData.append("speed", String(options.speed));
+    // Pass non-standard voice names as style instructions
+    if (options.voice && !["alloy", "echo", "fable", "nova", "onyx", "shimmer"].includes(options.voice)) {
+      formData.append("instruct", options.voice);
     }
 
     const response = await fetch(`${serviceUrl}/synthesize`, {
       method: "POST",
       body: formData,
-      signal: AbortSignal.timeout(30000),
+      signal: AbortSignal.timeout(60000),
     });
 
     if (!response.ok) {
