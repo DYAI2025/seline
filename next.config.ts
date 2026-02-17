@@ -112,6 +112,14 @@ const nextConfig: NextConfig = {
   },
   // Configure webpack to handle ONNX files and exclude Remotion from bundling
   webpack: (config, { isServer }) => {
+    // Deduplicate Three.js — @pixiv/three-vrm bundles its own copy otherwise
+    if (!isServer) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        three: path.resolve(__dirname, "node_modules/three"),
+      };
+    }
+
     // For client-side, prevent Node.js-only modules from being bundled
     if (!isServer) {
       config.resolve.fallback = {

@@ -19,8 +19,8 @@ export class GpuTTSProvider implements TTSProvider {
 
     const formData = new FormData();
     formData.append("text", options.text);
-    formData.append("language", "de"); // Default to German for Selina
-    formData.append("nfe_step", "16"); // Fast mode for realtime chat
+    formData.append("language", "en"); // Use base model (German fine-tune is broken, base handles DE fine)
+    formData.append("nfe_step", "32"); // Balance of quality and speed
 
     if (options.speed) {
       formData.append("speed", String(options.speed));

@@ -293,6 +293,8 @@ async function transcribeWithGpuService(
   const formData = new FormData();
   const blob = new Blob([new Uint8Array(audio)], { type: mimeType });
   formData.append("file", blob, effectiveFilename);
+  // Hint German to prevent language hallucination (Japanese/Chinese on short clips)
+  formData.append("language", "de");
 
   const response = await fetch(`${serviceUrl}/transcribe`, {
     method: "POST",

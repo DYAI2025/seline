@@ -116,6 +116,6 @@ export const config = {
      * - api/characters/:id/documents* (large multipart uploads; route handles auth directly)
      * Feel free to modify this pattern to include more paths.
      */
-    "/((?!_next/static|_next/image|favicon.ico|assets/|api/characters/[^/]+/documents(?:/.*)?|.*\\.(?:svg|png|jpg|jpeg|gif|webp|wasm|onnx|json)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|assets/|api/characters/[^/]+/documents(?:/.*)?|.*\\.(?:svg|png|jpg|jpeg|gif|webp|wasm|onnx|json|vrm|glb|gltf|html)$).*)",
   ],
 };

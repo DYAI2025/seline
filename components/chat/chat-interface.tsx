@@ -22,6 +22,8 @@ import {
     useSessionSyncStore,
     sessionInfoArrayToSyncData,
 } from "@/lib/stores/session-sync-store";
+import { VoiceModeProvider } from "@/components/avatar/voice-mode-context";
+import { AvatarPanel } from "@/components/avatar/avatar-panel";
 
 interface CharacterFullData {
     id: string;
@@ -1134,28 +1136,33 @@ export default function ChatInterface({
                     characterId={character.id}
                     initialMessages={messages}
                 >
-                    <div className="flex h-full flex-col gap-3">
-                        {activeRun && (
-                            <div className="px-4 pt-2 space-y-2">
-                                <ScheduledRunBanner
-                                    run={activeRun}
-                                    onCancel={handleCancelRun}
-                                    cancelling={isCancellingRun}
+                    <VoiceModeProvider>
+                        <div className="flex h-full gap-3">
+                            <div className="flex-1 flex flex-col gap-3 min-w-0">
+                                {activeRun && (
+                                    <div className="px-4 pt-2 space-y-2">
+                                        <ScheduledRunBanner
+                                            run={activeRun}
+                                            onCancel={handleCancelRun}
+                                            cancelling={isCancellingRun}
+                                        />
+                                    </div>
+                                )}
+                                <Thread
+                                    onSessionActivity={handleSessionActivity}
+                                    footer={null}
+                                    isBackgroundTaskRunning={Boolean(activeRun || isProcessingInBackground)}
+                                    isProcessingInBackground={isProcessingInBackground}
+                                    sessionId={sessionId}
+                                    onCancelBackgroundRun={handleCancelBackgroundRun}
+                                    isCancellingBackgroundRun={isCancellingBackgroundRun}
+                                    canCancelBackgroundRun={Boolean(processingRunId)}
+                                    isZombieBackgroundRun={isZombieRun}
                                 />
                             </div>
-                        )}
-                        <Thread
-                            onSessionActivity={handleSessionActivity}
-                            footer={null}
-                            isBackgroundTaskRunning={Boolean(activeRun || isProcessingInBackground)}
-                            isProcessingInBackground={isProcessingInBackground}
-                            sessionId={sessionId}
-                            onCancelBackgroundRun={handleCancelBackgroundRun}
-                            isCancellingBackgroundRun={isCancellingBackgroundRun}
-                            canCancelBackgroundRun={Boolean(processingRunId)}
-                            isZombieBackgroundRun={isZombieRun}
-                        />
-                    </div>
+                            <AvatarPanel />
+                        </div>
+                    </VoiceModeProvider>
                 </ChatProvider>
             </CharacterProvider>
         </Shell>

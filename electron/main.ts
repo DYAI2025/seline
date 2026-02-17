@@ -601,6 +601,7 @@ async function createWindow(): Promise<void> {
       sandbox: true, // Enable sandbox for additional security
       webSecurity: true,
       allowRunningInsecureContent: false,
+      webgl: true, // Enable WebGL for 3D avatar rendering
     },
     show: false, // Don't show until ready to prevent visual flash
   });
@@ -2388,6 +2389,12 @@ function setupIpcHandlers(): void {
     }
   });
 }
+
+// Enable WebGL in the sandboxed renderer (needed for 3D avatar).
+// Linux Electron sandboxes the GPU process by default, which blocks WebGL context creation.
+app.commandLine.appendSwitch("ignore-gpu-blocklist");
+app.commandLine.appendSwitch("enable-webgl");
+app.commandLine.appendSwitch("disable-gpu-sandbox");
 
 // App lifecycle events
 app.whenReady().then(async () => {

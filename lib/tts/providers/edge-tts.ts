@@ -13,12 +13,12 @@ export class EdgeTTSProvider implements TTSProvider {
   async synthesize(options: TTSOptions): Promise<TTSResult> {
     const { EdgeTTS } = await import("node-edge-tts");
 
-    const voice = options.voice || "en-US-AriaNeural";
+    const voice = options.voice || "de-DE-SeraphinaMultilingualNeural";
     const rate = options.speed ? `${((options.speed - 1) * 100).toFixed(0)}%` : undefined;
 
     const tts = new EdgeTTS({
       voice,
-      outputFormat: "audio-24khz-48kbitrate-mono-mp3",
+      outputFormat: "audio-24khz-96kbitrate-mono-mp3",
       rate: rate || undefined,
     });
 

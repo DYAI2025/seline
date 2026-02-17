@@ -62,7 +62,9 @@
     "@huggingface/hub": "^2.7.1",
     "@huggingface/transformers": "3.0.0",
     "@lancedb/lancedb": "^0.22.3",
+    "@met4citizen/talkinghead": "^1.7.0",
     "@modelcontextprotocol/sdk": "^1.25.2",
+    "@pixiv/three-vrm": "^3.4.5",
     "@qdrant/js-client-rest": "^1.16.2",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-avatar": "^1.1.2",
@@ -133,6 +135,7 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
+    "three": "^0.182.0",
     "zlib-sync": "^0.1.10",
     "zod": "^3.24.1",
     "zustand": "^5.0.11"
@@ -148,6 +151,7 @@
     "@types/qrcode": "^1.5.5",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/three": "^0.182.0",
     "autoprefixer": "^10.4.20",
     "baseline-browser-mapping": "^2.9.19",
     "concurrently": "^9.2.1",
@@ -183,6 +187,9 @@
       "electron-winstaller",
       "@swc/core",
       "@vscode/ripgrep"
-    ]
+    ],
+    "patchedDependencies": {
+      "@met4citizen/talkinghead@1.7.0": "patches/@met4citizen__talkinghead@1.7.0.patch"
+    }
   }
 }

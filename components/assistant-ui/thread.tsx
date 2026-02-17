@@ -34,6 +34,8 @@ import {
   CircleStopIcon,
   PackageIcon,
   SearchIcon,
+  MicIcon,
+  MicOffIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -78,6 +80,8 @@ import {
   ContextWindowBlockedBanner,
   type ContextWindowBlockedPayload,
 } from "./context-window-blocked-banner";
+import { useVoiceMode } from "./use-voice-mode";
+import { useOptionalVoiceModeContext } from "@/components/avatar/voice-mode-context";
 
 
 interface ThreadProps {
@@ -452,6 +456,19 @@ const Composer: FC<{
   const isDeepResearchLoading = deepResearch?.isLoading ?? false;
   const isOperationRunning = isRunning || isDeepResearchLoading;
   const isQueueBlocked = isOperationRunning || isBackgroundTaskRunning;
+
+  // Voice mode + avatar context bridge
+  const voiceModeCtx = useOptionalVoiceModeContext();
+  const voiceMode = useVoiceMode({
+    onTranscript: (text) => {
+      threadRuntime.composer.setText(text);
+      threadRuntime.composer.send();
+    },
+    isRunning,
+    onVisemesChange: voiceModeCtx?.setVisemes,
+    onAudioElementChange: voiceModeCtx?.setAudioElement,
+    onStateChange: voiceModeCtx?.setVoiceState,
+  });
 
   // Track if we're currently processing a queued message
   const isProcessingQueue = useRef(false);
@@ -960,6 +977,42 @@ const Composer: FC<{
               </TooltipTrigger>
               <TooltipContent className="bg-terminal-dark text-terminal-cream font-mono text-xs">
                 {t("tooltips.addImage")}
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Voice Mode Toggle */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={voiceMode.toggleVoiceMode}
+                  disabled={isDeepResearchMode}
+                  className={cn(
+                    "size-8",
+                    voiceMode.isVoiceMode
+                      ? "text-red-500 bg-red-50 hover:bg-red-100"
+                      : "text-terminal-muted hover:text-terminal-dark hover:bg-terminal-dark/10"
+                  )}
+                >
+                  {voiceMode.isVoiceMode ? (
+                    <MicIcon className={cn("size-4", voiceMode.isListening && "animate-pulse")} />
+                  ) : (
+                    <MicOffIcon className="size-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="bg-terminal-dark text-terminal-cream font-mono text-xs">
+                {voiceMode.isVoiceMode
+                  ? voiceMode.isListening
+                    ? "Listening..."
+                    : voiceMode.isTranscribing
+                      ? "Transcribing..."
+                      : voiceMode.isSpeaking
+                        ? "Speaking..."
+                        : "Voice Mode ON"
+                  : "Voice Mode"}
               </TooltipContent>
             </Tooltip>
 

@@ -58,6 +58,10 @@ binaries/
 models/**
 !models/README.md
 
+# 3D avatar models (large binary files)
+public/avatars/*.glb
+public/avatars/*.vrm
+
 # Video files (should not be in repo - use external storage)
 *.mp4
 *.mov
