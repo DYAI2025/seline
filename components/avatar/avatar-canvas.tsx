@@ -66,6 +66,7 @@ interface AvatarCanvasProps {
   visemes: VisemeCue[];
   audioElement: HTMLAudioElement | null;
   isSpeaking: boolean;
+  avatarMood?: string;
   onError: (msg: string) => void;
 }
 
@@ -73,6 +74,7 @@ export default function AvatarCanvas({
   visemes,
   audioElement,
   isSpeaking,
+  avatarMood,
   onError,
 }: AvatarCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -126,6 +128,18 @@ export default function AvatarCanvas({
       headRef.current = null;
     };
   }, [onError]);
+
+  // Set avatar mood based on detected user emotion
+  useEffect(() => {
+    const head = headRef.current;
+    if (!head || !ready || !avatarMood) return;
+    try {
+      head.setMood(avatarMood);
+      console.log("[TalkingHead] Mood set to:", avatarMood);
+    } catch {
+      // setMood may not exist on all TalkingHead versions
+    }
+  }, [avatarMood, ready]);
 
   // Drive lip-sync: trigger speakAudio once all data is available
   const sentAudioRef = useRef<string | null>(null);

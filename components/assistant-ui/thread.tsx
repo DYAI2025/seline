@@ -467,6 +467,7 @@ const Composer: FC<{
     isRunning,
     onVisemesChange: voiceModeCtx?.setVisemes,
     onAudioElementChange: voiceModeCtx?.setAudioElement,
+    onEmotionChange: voiceModeCtx?.setUserEmotion,
     onStateChange: voiceModeCtx?.setVoiceState,
   });
 

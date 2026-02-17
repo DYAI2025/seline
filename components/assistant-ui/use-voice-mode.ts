@@ -8,6 +8,12 @@ import type { VisemeCue } from "@/components/avatar/viseme-types";
 // Types
 // ---------------------------------------------------------------------------
 
+interface EmotionData {
+  emotion: string;
+  avatar: { mood: string; expression: string };
+  tts_instruct: string;
+}
+
 interface UseVoiceModeOptions {
   /** Called with the transcribed text from ASR */
   onTranscript: (text: string) => void;
@@ -16,6 +22,7 @@ interface UseVoiceModeOptions {
   /** Optional callbacks to sync avatar state */
   onVisemesChange?: (visemes: VisemeCue[]) => void;
   onAudioElementChange?: (el: HTMLAudioElement | null) => void;
+  onEmotionChange?: (emotion: { emotion: string; mood: string; expression: string; ttsInstruct: string } | null) => void;
   onStateChange?: (state: {
     isVoiceMode: boolean;
     isListening: boolean;
@@ -127,6 +134,7 @@ export function useVoiceMode({
   isRunning,
   onVisemesChange,
   onAudioElementChange,
+  onEmotionChange,
   onStateChange,
 }: UseVoiceModeOptions): UseVoiceModeReturn {
   const [isVoiceMode, setIsVoiceMode] = useState(false);
@@ -150,6 +158,8 @@ export function useVoiceMode({
   onVisemesChangeRef.current = onVisemesChange;
   const onAudioElementChangeRef = useRef(onAudioElementChange);
   onAudioElementChangeRef.current = onAudioElementChange;
+  const onEmotionChangeRef = useRef(onEmotionChange);
+  onEmotionChangeRef.current = onEmotionChange;
   const onStateChangeRef = useRef(onStateChange);
   onStateChangeRef.current = onStateChange;
 
@@ -426,6 +436,17 @@ export function useVoiceMode({
           setIsTranscribing(false);
 
           if (data.text && data.text.trim()) {
+            // Pass detected emotion to avatar context
+            if (data.emotion && onEmotionChangeRef.current) {
+              const e = data.emotion;
+              onEmotionChangeRef.current({
+                emotion: e.emotion,
+                mood: e.avatar?.mood ?? "neutral",
+                expression: e.avatar?.expression ?? "idle",
+                ttsInstruct: e.tts_instruct ?? "",
+              });
+              console.log("[VoiceMode] User emotion:", e.emotion, e.sems?.join(", ") || "");
+            }
             onTranscript(data.text.trim());
             // Don't resume listening here — wait for LLM to finish + TTS
           } else {

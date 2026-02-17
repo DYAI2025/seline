@@ -39,13 +39,19 @@ export function AvatarPanel() {
             visemes={voiceCtx?.visemes ?? []}
             audioElement={voiceCtx?.audioElement ?? null}
             isSpeaking={voiceCtx?.isSpeaking ?? false}
+            avatarMood={voiceCtx?.userEmotion?.mood}
             onError={setError}
           />
         )}
       </div>
-      {statusText && (
+      {(statusText || voiceCtx?.userEmotion) && (
         <div className="text-center text-xs font-mono text-terminal-muted py-1">
           {statusText}
+          {voiceCtx?.userEmotion && voiceCtx.userEmotion.emotion !== "neutral" && (
+            <span className="ml-2 text-terminal-amber">
+              [{voiceCtx.userEmotion.emotion}]
+            </span>
+          )}
         </div>
       )}
     </div>

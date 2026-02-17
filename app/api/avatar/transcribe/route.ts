@@ -1,4 +1,5 @@
 import { transcribeAudio, isTranscriptionAvailable } from "@/lib/audio/transcription";
+import { analyzeEmotion } from "@/lib/markers/client";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -20,5 +21,14 @@ export async function POST(req: Request) {
   const mimeType = file.type || "audio/wav";
 
   const result = await transcribeAudio(buffer, mimeType, file.name ?? "audio.wav");
-  return NextResponse.json({ text: result.text });
+
+  // Run emotion analysis on transcribed text (fire-and-forget safe, returns neutral on failure)
+  const emotion = result.text?.trim()
+    ? await analyzeEmotion(result.text.trim())
+    : null;
+
+  return NextResponse.json({
+    text: result.text,
+    emotion: emotion ?? undefined,
+  });
 }
